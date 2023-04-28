@@ -9,44 +9,41 @@
  */
 int _printf(const char *format, ...)
 {
-	unsigned int i = 0, len = 0, ibuf = 0;
-	va_list args;
-	int (*function)(va_list, char *, unsigned int);
-	char *buffer;
+	int count = 0, i = 0;
+	va_list arg;
+	char *str;
 
-	va_start(args, format), buffer = malloc(sizeof(char) * 1024);
-	if (!format || !buffer || (format[i] == '%' && !format[i + 1]))
-		return (-1);
-	if (!format[i])
-		return (0);
-	for (i = 0; format && format[i]; i++)
+	va_start(arg, format);
+
+	while (format && format[i])
 	{
 		if (format[i] == '%')
 		{
-			if (format[i + 1] == '\0')
-			{	print_buf(buffer, ibuf), free(buffer), va_end(args);
+			i++;
+			if (!format[i])
 				return (-1);
+			if (format[i] == '%')
+				count += putchar('%');
+			else if (format[i] == 'c')
+				count += putchar(va_arg(arg, int));
+			else if (format[i] == 's')
+			{
+				str = va_arg(arg, char *);
+				if (!str)
+					str = "(null)";
+				while (*str)
+					count += putchar(*(str++));
 			}
 			else
-			{	function = get_print_func(format, i + 1);
-				if (function == NULL)
-				{
-					if (format[i + 1] == ' ' && !format[i + 2])
-						return (-1);
-					handl_buf(buffer, format[i], ibuf), len++, i--;
-				}
-				else
-				{
-					len += function(args, buffer, ibuf);
-					i += ev_print_func(format, i + 1);
-				}
-			} i++;
+			{
+				count += putchar('%');
+				count += putchar(format[i]);
+			}
 		}
 		else
-			handl_buf(buffer, format[i], ibuf), len++;
-		for (ibuf = len; ibuf > 1024; ibuf -= 1024)
-			;
+			count += putchar(format[i]);
+		i++;
 	}
-	print_buf(buffer, ibuf), free(buffer), va_end(args);
-	return (len);
+	va_end(arg);
+	return (count);
 }
